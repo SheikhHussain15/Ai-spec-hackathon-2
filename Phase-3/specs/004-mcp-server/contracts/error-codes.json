@@ -1,0 +1,177 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCP Tool Error Taxonomy",
+  "description": "Standardized error codes and response formats for all MCP tools",
+  "error_codes": {
+    "VALIDATION_ERROR": {
+      "code": "VALIDATION_ERROR",
+      "http_status": 422,
+      "description": "Input failed schema validation",
+      "response_template": {
+        "success": false,
+        "error": "Input validation failed: {field} - {reason}",
+        "error_code": "VALIDATION_ERROR",
+        "tool_name": "{tool_name}",
+        "details": {
+          "field": "{field_name}",
+          "reason": "{validation_reason}",
+          "received": "{actual_value}"
+        }
+      },
+      "examples": [
+        {
+          "success": false,
+          "error": "Input validation failed: title - string too short",
+          "error_code": "VALIDATION_ERROR",
+          "tool_name": "add_task",
+          "details": {
+            "field": "title",
+            "reason": "minLength is 1",
+            "received": ""
+          }
+        },
+        {
+          "success": false,
+          "error": "Input validation failed: user_id - invalid UUID format",
+          "error_code": "VALIDATION_ERROR",
+          "tool_name": "list_tasks",
+          "details": {
+            "field": "user_id",
+            "reason": "format uuid",
+            "received": "not-a-uuid"
+          }
+        }
+      ]
+    },
+    "OWNERSHIP_VIOLATION": {
+      "code": "OWNERSHIP_VIOLATION",
+      "http_status": 403,
+      "description": "User attempted to access another user's resource",
+      "response_template": {
+        "success": false,
+        "error": "Access denied: You do not own this resource",
+        "error_code": "OWNERSHIP_VIOLATION",
+        "tool_name": "{tool_name}",
+        "details": {
+          "requested_resource_id": "{resource_id}",
+          "authenticated_user_id": "{user_id}"
+        }
+      },
+      "examples": [
+        {
+          "success": false,
+          "error": "Access denied: You do not own this resource",
+          "error_code": "OWNERSHIP_VIOLATION",
+          "tool_name": "update_task",
+          "details": {
+            "requested_resource_id": "task-uuid-123",
+            "authenticated_user_id": "user-uuid-456"
+          }
+        }
+      ],
+      "security_note": "All ownership violations are logged as security events"
+    },
+    "NOT_FOUND": {
+      "code": "NOT_FOUND",
+      "http_status": 404,
+      "description": "Requested resource does not exist",
+      "response_template": {
+        "success": false,
+        "error": "Resource not found: {resource_type} with ID {resource_id}",
+        "error_code": "NOT_FOUND",
+        "tool_name": "{tool_name}",
+        "details": {
+          "resource_type": "{type}",
+          "resource_id": "{id}"
+        }
+      },
+      "examples": [
+        {
+          "success": false,
+          "error": "Resource not found: Task with ID nonexistent-uuid",
+          "error_code": "NOT_FOUND",
+          "tool_name": "delete_task",
+          "details": {
+            "resource_type": "Task",
+            "resource_id": "nonexistent-uuid"
+          }
+        }
+      ]
+    },
+    "DATABASE_ERROR": {
+      "code": "DATABASE_ERROR",
+      "http_status": 500,
+      "description": "Database operation failed",
+      "response_template": {
+        "success": false,
+        "error": "Database operation failed: {error_summary}",
+        "error_code": "DATABASE_ERROR",
+        "tool_name": "{tool_name}",
+        "details": {
+          "operation": "{db_operation}",
+          "error_summary": "{sanitized_error}"
+        }
+      },
+      "examples": [
+        {
+          "success": false,
+          "error": "Database operation failed: connection timeout",
+          "error_code": "DATABASE_ERROR",
+          "tool_name": "add_task",
+          "details": {
+            "operation": "INSERT",
+            "error_summary": "connection timeout after 30s"
+          }
+        }
+      ],
+      "security_note": "Database errors are sanitized to prevent information leakage"
+    },
+    "INTERNAL_ERROR": {
+      "code": "INTERNAL_ERROR",
+      "http_status": 500,
+      "description": "Unexpected internal error occurred",
+      "response_template": {
+        "success": false,
+        "error": "An unexpected error occurred. Please try again.",
+        "error_code": "INTERNAL_ERROR",
+        "tool_name": "{tool_name}",
+        "details": {
+          "trace_id": "{correlation_id}"
+        }
+      },
+      "examples": [
+        {
+          "success": false,
+          "error": "An unexpected error occurred. Please try again.",
+          "error_code": "INTERNAL_ERROR",
+          "tool_name": "complete_task",
+          "details": {
+            "trace_id": "req-abc123"
+          }
+        }
+      ],
+      "security_note": "Internal errors are logged with full stack trace but sanitized in response"
+    }
+  },
+  "error_handling_rules": {
+    "validation_order": [
+      "1. Check required fields present",
+      "2. Validate field types",
+      "3. Validate field constraints (length, format, range)",
+      "4. Validate business rules (user_id format, task_id exists)"
+    ],
+    "ownership_check_timing": "After validation, before database operation",
+    "logging_requirements": [
+      "All errors logged with tool_name, user_id, timestamp",
+      "OWNERSHIP_VIOLATION errors logged as security events",
+      "DATABASE_ERROR includes operation type",
+      "Validation errors include field and reason"
+    ],
+    "response_standards": [
+      "All error responses include error_code for programmatic handling",
+      "Error messages are human-readable",
+      "No internal details exposed to client",
+      "Trace ID provided for debugging (INTERNAL_ERROR)"
+    ]
+  }
+}

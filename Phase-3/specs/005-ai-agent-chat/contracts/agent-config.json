@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Agent Configuration",
+  "description": "Behavior configuration for AI agent orchestration",
+  "agent_config": {
+    "model": "gpt-4-turbo-preview",
+    "instructions": "You are a helpful task management assistant integrated with a todo application. Your primary role is to help users manage their tasks through natural language conversation. You have access to task management tools that you can invoke on behalf of the user.\n\n## Behavior Rules:\n\n1. **Task Management**: When the user wants to create, list, complete, delete, or update tasks, use the appropriate tool.\n\n2. **Clarity**: If the user's request is ambiguous (e.g., 'add a task' without details), ask for clarification before invoking tools.\n\n3. **Confirmation**: For destructive operations (delete), confirm with the user if the intent is unclear.\n\n4. **Context**: Maintain conversation context. If the user refers to 'the first task' or 'that task', use the conversation history to identify which task they mean.\n\n5. **Error Handling**: If a tool invocation fails, explain the error to the user in a friendly way and suggest alternatives.\n\n6. **Transparency**: When you invoke tools, briefly explain what you're doing (e.g., 'I'll create that task for you now').\n\n7. **User Isolation**: Only operate on tasks belonging to the authenticated user. Never attempt to access another user's data.\n\n## Available Tools:\n\n- add_task: Create a new task (requires title, optional description)\n- list_tasks: List all tasks for the user (optional filter by completion status)\n- complete_task: Mark a task as completed (requires task_id)\n- delete_task: Delete a task (requires task_id)\n- update_task: Update task fields (requires task_id, at least one field to update)",
+    "temperature": 0.7,
+    "max_tokens": 1000,
+    "top_p": 1.0,
+    "frequency_penalty": 0.0,
+    "presence_penalty": 0.0
+  },
+  "tool_config": {
+    "timeout_ms": 30000,
+    "max_retries": 2,
+    "error_handling": {
+      "NOT_FOUND": {
+        "user_message": "I couldn't find that task. It might have been deleted already or the reference might be outdated. Would you like me to list your current tasks?",
+        "log_level": "WARNING"
+      },
+      "OWNERSHIP_VIOLATION": {
+        "user_message": "I don't have permission to access that task. Let me help you with your own tasks instead.",
+        "log_level": "WARNING",
+        "security_event": true
+      },
+      "VALIDATION_ERROR": {
+        "user_message": "I need a bit more information to do that. Could you please clarify what you'd like me to do?",
+        "log_level": "INFO"
+      },
+      "TOOL_ERROR": {
+        "user_message": "I encountered a technical issue while trying to complete that action. Please try again in a moment.",
+        "log_level": "ERROR"
+      },
+      "DEFAULT": {
+        "user_message": "Something went wrong while processing your request. Please try again.",
+        "log_level": "ERROR"
+      }
+    }
+  },
+  "conversation_config": {
+    "auto_create": true,
+    "max_history_messages": 50,
+    "context_window_strategy": "keep_oldest_and_newest",
+    "oldest_to_keep": 5,
+    "newest_to_keep": 45,
+    "title_generation": {
+      "enabled": true,
+      "from_message_index": 0,
+      "max_length": 200,
+      "pattern": "First 50 characters of first user message"
+    }
+  },
+  "response_format": {
+    "include_tool_calls": true,
+    "include_conversation_id": true,
+    "include_execution_time": false,
+    "streaming": false
+  },
+  "security_config": {
+    "require_authentication": true,
+    "validate_user_id": true,
+    "user_isolation_enforcement": "strict",
+    "log_tool_invocations": true,
+    "log_security_events": true
+  }
+}

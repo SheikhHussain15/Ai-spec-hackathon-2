@@ -1,0 +1,202 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Chat API Contract",
+  "description": "Request and response schemas for POST /api/{user_id}/chat endpoint",
+  "endpoints": {
+    "create_chat": {
+      "method": "POST",
+      "path": "/api/{user_id}/chat",
+      "description": "Send a message to the AI agent and receive a response",
+      "request_schema": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Authenticated user ID (from JWT or path parameter)"
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000,
+            "description": "User's message to the agent"
+          },
+          "conversation_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Existing conversation ID (optional, auto-created if not provided)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "response_schema": {
+        "type": "object",
+        "required": ["response", "conversation_id"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "response": {
+            "type": "string",
+            "description": "Agent's text response"
+          },
+          "conversation_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Conversation ID (new or existing)"
+          },
+          "tool_calls": {
+            "type": "array",
+            "description": "List of tool invocations (for transparency)",
+            "items": {
+              "type": "object",
+              "required": ["tool_name", "success"],
+              "properties": {
+                "tool_name": {
+                  "type": "string",
+                  "enum": ["add_task", "list_tasks", "complete_task", "delete_task", "update_task"]
+                },
+                "arguments": {
+                  "type": "object",
+                  "description": "Tool invocation arguments"
+                },
+                "success": {
+                  "type": "boolean"
+                },
+                "result": {
+                  "type": "object",
+                  "description": "Tool execution result (if successful)"
+                },
+                "error": {
+                  "type": "string",
+                  "description": "Error message (if failed)"
+                },
+                "error_code": {
+                  "type": "string",
+                  "enum": ["NOT_FOUND", "OWNERSHIP_VIOLATION", "VALIDATION_ERROR", "TOOL_ERROR"]
+                },
+                "execution_time_ms": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "get_conversations": {
+      "method": "GET",
+      "path": "/api/{user_id}/conversations",
+      "description": "Get all conversations for the authenticated user",
+      "response_schema": {
+        "type": "object",
+        "required": ["conversations"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "conversations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "title": { "type": "string" },
+                "created_at": { "type": "string", "format": "date-time" },
+                "updated_at": { "type": "string", "format": "date-time" },
+                "message_count": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "get_conversation_history": {
+      "method": "GET",
+      "path": "/api/{user_id}/conversations/{conversation_id}",
+      "description": "Get full message history for a specific conversation",
+      "response_schema": {
+        "type": "object",
+        "required": ["conversation", "messages"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "conversation": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "title": { "type": "string" },
+              "created_at": { "type": "string", "format": "date-time" },
+              "updated_at": { "type": "string", "format": "date-time" }
+            }
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "role": { "type": "string", "enum": ["user", "assistant"] },
+                "content": { "type": "string" },
+                "tool_calls": { "type": "object" },
+                "created_at": { "type": "string", "format": "date-time" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "error_responses": {
+    "401_unauthorized": {
+      "description": "Invalid or missing JWT",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "const": false },
+          "error": { "type": "string" },
+          "error_code": { "type": "string", "const": "UNAUTHORIZED" }
+        }
+      }
+    },
+    "403_forbidden": {
+      "description": "User ID mismatch (trying to access another user's conversation)",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "const": false },
+          "error": { "type": "string" },
+          "error_code": { "type": "string", "const": "FORBIDDEN" }
+        }
+      }
+    },
+    "404_not_found": {
+      "description": "Conversation not found",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "const": false },
+          "error": { "type": "string" },
+          "error_code": { "type": "string", "const": "NOT_FOUND" }
+        }
+      }
+    },
+    "500_internal_error": {
+      "description": "Agent execution failed or database error",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "const": false },
+          "error": { "type": "string" },
+          "error_code": { "type": "string", "const": "INTERNAL_ERROR" }
+        }
+      }
+    }
+  }
+}

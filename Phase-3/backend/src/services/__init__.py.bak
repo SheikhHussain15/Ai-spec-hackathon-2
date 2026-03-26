@@ -1,0 +1,28 @@
+"""
+Services Module for AI chat orchestration.
+"""
+
+from src.services.conversation_service import (
+    get_or_create_conversation,
+    store_message,
+    get_conversation_history,
+    get_user_conversations,
+    get_conversation_with_messages,
+)
+
+from src.services.agent_service import (
+    run_agent_with_tools,
+    execute_mcp_tool,
+    get_mcp_tool_definitions,
+)
+
+__all__ = [
+    "get_or_create_conversation",
+    "store_message",
+    "get_conversation_history",
+    "get_user_conversations",
+    "get_conversation_with_messages",
+    "run_agent_with_tools",
+    "execute_mcp_tool",
+    "get_mcp_tool_definitions",
+]

@@ -1,0 +1,283 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCP Tool Schemas",
+  "description": "Input and output schemas for all 5 MCP task management tools",
+  "tools": {
+    "add_task": {
+      "name": "add_task",
+      "description": "Add a new task for the authenticated user",
+      "input_schema": {
+        "type": "object",
+        "required": ["user_id", "title"],
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Authenticated user ID"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Task title"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Optional task description"
+          }
+        },
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["success", "data"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "data": {
+            "type": "object",
+            "required": ["id", "title", "user_id", "completed"],
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "title": { "type": "string" },
+              "description": { "type": ["string", "null"] },
+              "user_id": { "type": "string" },
+              "completed": { "type": "boolean" },
+              "created_at": { "type": "string", "format": "date-time" },
+              "updated_at": { "type": "string", "format": "date-time" }
+            }
+          },
+          "tool_name": { "type": "string", "const": "add_task" },
+          "execution_time_ms": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "list_tasks": {
+      "name": "list_tasks",
+      "description": "List all tasks for the authenticated user",
+      "input_schema": {
+        "type": "object",
+        "required": ["user_id"],
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Authenticated user ID"
+          },
+          "completed": {
+            "type": ["boolean", "null"],
+            "description": "Filter by completion status (optional)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["success", "data"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "title": { "type": "string" },
+                "description": { "type": ["string", "null"] },
+                "user_id": { "type": "string" },
+                "completed": { "type": "boolean" },
+                "created_at": { "type": "string", "format": "date-time" },
+                "updated_at": { "type": "string", "format": "date-time" }
+              }
+            }
+          },
+          "tool_name": { "type": "string", "const": "list_tasks" },
+          "execution_time_ms": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "complete_task": {
+      "name": "complete_task",
+      "description": "Mark a specific task as completed",
+      "input_schema": {
+        "type": "object",
+        "required": ["user_id", "task_id"],
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Authenticated user ID"
+          },
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Task ID to complete"
+          }
+        },
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["success", "data"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "data": {
+            "type": "object",
+            "required": ["id", "title", "completed"],
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "title": { "type": "string" },
+              "completed": { "type": "boolean", "const": true },
+              "updated_at": { "type": "string", "format": "date-time" }
+            }
+          },
+          "tool_name": { "type": "string", "const": "complete_task" },
+          "execution_time_ms": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "delete_task": {
+      "name": "delete_task",
+      "description": "Delete a specific task",
+      "input_schema": {
+        "type": "object",
+        "required": ["user_id", "task_id"],
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Authenticated user ID"
+          },
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Task ID to delete"
+          }
+        },
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["success"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "deleted": { "type": "boolean", "const": true },
+              "task_id": { "type": "string", "format": "uuid" }
+            }
+          },
+          "tool_name": { "type": "string", "const": "delete_task" },
+          "execution_time_ms": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "update_task": {
+      "name": "update_task",
+      "description": "Update a specific task's fields",
+      "input_schema": {
+        "type": "object",
+        "required": ["user_id", "task_id"],
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Authenticated user ID"
+          },
+          "task_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Task ID to update"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "New task title (optional)"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "New task description (optional)"
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "New completion status (optional)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["success", "data"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          },
+          "data": {
+            "type": "object",
+            "required": ["id", "title", "user_id"],
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "title": { "type": "string" },
+              "description": { "type": ["string", "null"] },
+              "user_id": { "type": "string" },
+              "completed": { "type": "boolean" },
+              "created_at": { "type": "string", "format": "date-time" },
+              "updated_at": { "type": "string", "format": "date-time" }
+            }
+          },
+          "tool_name": { "type": "string", "const": "update_task" },
+          "execution_time_ms": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  },
+  "common_error_schema": {
+    "type": "object",
+    "required": ["success", "error", "error_code"],
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "const": false
+      },
+      "error": {
+        "type": "string",
+        "description": "Human-readable error message"
+      },
+      "error_code": {
+        "type": "string",
+        "enum": [
+          "VALIDATION_ERROR",
+          "OWNERSHIP_VIOLATION",
+          "NOT_FOUND",
+          "DATABASE_ERROR",
+          "INTERNAL_ERROR"
+        ],
+        "description": "Machine-readable error code"
+      },
+      "tool_name": {
+        "type": "string",
+        "description": "Which tool encountered the error"
+      },
+      "details": {
+        "type": "object",
+        "description": "Additional error context (optional)"
+      }
+    }
+  }
+}

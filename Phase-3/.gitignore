@@ -1,0 +1,55 @@
+# OS Files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+
+# Dependencies
+node_modules/
+vendor/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env*.local
+!.env.example
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Python (backend)
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Database (SQLite)
+*.db
+*.sqlite
+*.sqlite3
