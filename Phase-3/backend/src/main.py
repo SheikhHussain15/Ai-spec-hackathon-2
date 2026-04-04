@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Multi-User Todo API",
     description="API for the multi-user todo web application with JWT authentication",
-    version="0.1.0",
+    version="0.1.1",  # Incremented version to trigger rebuild
     lifespan=lifespan
 )
 
