@@ -13,32 +13,37 @@ logger = logging.getLogger(__name__)
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    Verify a plain password against a hashed password
-    """
-    return pwd_context.verify(plain_password, hashed_password)
+import hashlib
+import base64
 
 def get_password_hash(password: str) -> str:
     """
-    Hash a plain password
+    Hash a plain password using bcrypt with a SHA-256 pre-hash to avoid the 72-character limit.
+    This is a standard practice to support long passwords securely.
     """
-    # Check password length before hashing to avoid bcrypt limitations
-    # bcrypt has a 72-byte limit, but we need to account for UTF-8 encoding
-    password_bytes = password.encode('utf-8')
-    if len(password_bytes) > 72:
-        # Truncate to 72 bytes and decode back to string
-        # Note: This could potentially alter multi-byte characters
-        truncated_password = password_bytes[:72].decode('utf-8', errors='ignore')
-        return pwd_context.hash(truncated_password)
-    
     try:
-        return pwd_context.hash(password)
+        # Pre-hash with SHA-256 and encode to base64 to ensure it's a valid string for passlib
+        # This bypasses bcrypt's 72-byte limit while maintaining security
+        sha256_hash = hashlib.sha256(password.encode('utf-8')).digest()
+        b64_hash = base64.b64encode(sha256_hash).decode('utf-8')
+        return pwd_context.hash(b64_hash)
     except Exception as e:
         # Log the actual error for debugging
-        print(f"Bcrypt error: {e}")
+        logger.error(f"Bcrypt hashing error: {e}")
         # Re-raise with a more specific message
         raise ValueError(f"Password hashing failed: {str(e)}")
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """
+    Verify a plain password against a hashed password using the same pre-hash
+    """
+    try:
+        sha256_hash = hashlib.sha256(plain_password.encode('utf-8')).digest()
+        b64_hash = base64.b64encode(sha256_hash).decode('utf-8')
+        return pwd_context.verify(b64_hash, hashed_password)
+    except Exception as e:
+        logger.error(f"Bcrypt verification error: {e}")
+        return False
 
 class AuthService:
     def __init__(self, session: Session):
