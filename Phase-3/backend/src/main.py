@@ -34,11 +34,7 @@ app = FastAPI(
 # Add CORS middleware BEFORE including routers
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://frontend-d8lsokkrw-hussain-razas-projects.vercel.app",
-        "https://frontend-d8lsokkrw-hussain-razas-projects.vercel.app/",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
